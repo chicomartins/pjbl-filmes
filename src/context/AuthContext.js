@@ -6,7 +6,6 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
 
-  // carregar usuário salvo no AsyncStorage
   useEffect(() => {
     (async () => {
       const storedUser = await AsyncStorage.getItem("@user");

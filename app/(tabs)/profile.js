@@ -8,7 +8,6 @@ export default function ProfileScreen() {
   const router = useRouter();
 
   if (!user) {
-    // se o usuário não estiver logado, volta pra tela de login
     router.replace("/login");
     return null;
   }
@@ -17,7 +16,6 @@ export default function ProfileScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Meu Perfil</Text>
 
-      {/* Foto de perfil (por enquanto imagem padrão) */}
       <Image
         source={{
           uri:

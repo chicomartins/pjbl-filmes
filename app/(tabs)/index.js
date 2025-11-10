@@ -23,7 +23,7 @@ export default function SearchScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Buscar Filmes 🎬</Text>
+      <Text style={styles.title}>Buscar Filmes</Text>
 
       <TextInput
         style={styles.input}

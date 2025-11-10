@@ -27,7 +27,15 @@ export default function Login() {
         secureTextEntry
       />
       <Button title="Entrar" onPress={handleLogin} />
-      <Button title="Cadastrar-se" onPress={() => router.push("/register")} />
+      <View style={{ height: 10 }} />
+      <Button title="Cadastrar" onPress={() => router.push("/register")} />
+      <View style={{ height: 10 }} />
+      <Button
+        title="Pular login"
+        color="#999"
+        onPress={() => router.replace("/(tabs)")}
+        accessibilityLabel="Continuar sem fazer login"
+      />
     </View>
   );
 }

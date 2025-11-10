@@ -77,6 +77,8 @@ export default function Register() {
       />
 
       <Button title="Cadastrar" onPress={handleRegister} />
+      <View style={{ height: 10 }} />
+      <Button title="Voltar para Login" color="#999" onPress={() => router.back()} />
     </View>
   );
 }
