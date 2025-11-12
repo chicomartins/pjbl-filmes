@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["http://localhost:8087", "http://localhost:19006", "https://expo.dev", "*"],
+    "method": ["GET", "POST", "PUT", "DELETE", "HEAD"],
+    "maxAgeSeconds": 3600,
+    "responseHeader": ["Content-Type", "x-goog-meta-*"]
+  }
+]

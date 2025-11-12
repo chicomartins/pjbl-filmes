@@ -1,57 +1,52 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { createContext, useContext, useState } from "react";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+} from "firebase/auth";
+import { auth } from "../services/firebaseConfig";
 
 const AuthContext = createContext();
 
-export function AuthProvider({ children }) {
+export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    (async () => {
-      const storedUser = await AsyncStorage.getItem("@user");
-      if (storedUser) setUser(JSON.parse(storedUser));
-    })();
-  }, []);
-
-  async function register({ name, email, password, photo }) {
-    const storedUsers = JSON.parse(await AsyncStorage.getItem("@users")) || [];
-
-    const alreadyExists = storedUsers.some((u) => u.email === email);
-    if (alreadyExists) throw new Error("Este e-mail já está cadastrado.");
-
-    const newUser = { name, email, password, photo };
-    storedUsers.push(newUser);
-
-    await AsyncStorage.setItem("@users", JSON.stringify(storedUsers));
-    await AsyncStorage.setItem("@user", JSON.stringify(newUser));
-    setUser(newUser);
-  }
-
-  async function login(email, password) {
-    const storedUsers = JSON.parse(await AsyncStorage.getItem("@users")) || [];
-    const found = storedUsers.find(
-      (u) => u.email === email && u.password === password
-    );
-    if (found) {
-      await AsyncStorage.setItem("@user", JSON.stringify(found));
-      setUser(found);
-      return true;
+  // 🔹 CADASTRAR USUÁRIO
+  const register = async ({ email, password }) => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userData = userCredential.user;
+      setUser(userData);
+      return userData; // ✅ retorna o user com uid, email, etc.
+    } catch (error) {
+      console.error("Erro no cadastro:", error);
+      throw error;
     }
-    return false;
-  }
+  };
 
-  async function logout() {
-    await AsyncStorage.removeItem("@user");
+  // 🔹 LOGIN
+  const login = async (email, password) => {
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      setUser(result.user);
+      return result.user;
+    } catch (error) {
+      console.error("Erro ao logar:", error);
+      throw error;
+    }
+  };
+
+  // 🔹 LOGOUT
+  const logout = async () => {
+    await signOut(auth);
     setUser(null);
-  }
+  };
 
   return (
     <AuthContext.Provider value={{ user, register, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
+export const useAuth = () => useContext(AuthContext);

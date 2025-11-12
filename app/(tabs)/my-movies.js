@@ -1,49 +1,73 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useState, useCallback } from "react";
+import { View, Text, FlatList, StyleSheet, Image } from "react-native";
+import { useFocusEffect, useRouter } from "expo-router";
+import { collection, getDocs } from "firebase/firestore";
 import { useAuth } from "../../src/context/AuthContext";
-import { useRouter } from "expo-router";
+import { db } from "../../src/services/firebaseConfig";
 
 export default function MyMovies() {
   const { user } = useAuth();
   const router = useRouter();
   const [movies, setMovies] = useState([]);
 
-  useEffect(() => {
-    if (!user) {
-      router.replace("/login");
-      return;
-    }
+  useFocusEffect(
+    useCallback(() => {
+      if (!user) {
+        router.replace("/login");
+      }
+    }, [user])
+  );
 
-    async function loadMovies() {
-      const key = `@movies_${user.email}`;
-      const stored = await AsyncStorage.getItem(key);
-      setMovies(stored ? JSON.parse(stored) : []);
-    }
+  useFocusEffect(
+    useCallback(() => {
+      async function loadMovies() {
+        if (!user) return;
+        try {
+          const moviesRef = collection(db, "users", user.uid, "movies");
+          const snapshot = await getDocs(moviesRef);
+          const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+          setMovies(list);
+        } catch (error) {
+          console.error("Erro ao carregar filmes:", error);
+        }
+      }
+      loadMovies();
+    }, [user])
+  );
 
-    loadMovies();
-  }, [user]);
-
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} accessible accessibilityLabel="Tela de meus filmes">
+      <Text style={styles.title} accessibilityRole="header">
+        🎬 Meus Filmes
+      </Text>
+
       {movies.length === 0 ? (
-        <Text style={styles.emptyText}>Você ainda não salvou nenhum filme.</Text>
+        <Text style={styles.empty} accessibilityLabel="Nenhum filme salvo ainda">
+          Nenhum filme salvo ainda 😔
+        </Text>
       ) : (
         <FlatList
           data={movies}
-          numColumns={2}
           keyExtractor={(item) => item.id.toString()}
+          numColumns={2}
+          columnWrapperStyle={{ justifyContent: "space-between" }}
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
-            <View style={styles.card}>
+            <View
+              style={styles.card}
+              accessible
+              accessibilityLabel={`Filme: ${item.title}. Avaliação: ${item.rating || "sem nota"}`}
+            >
               <Image
-                source={{ uri: `https://image.tmdb.org/t/p/w300${item.poster}` }}
+                source={{ uri: `https://image.tmdb.org/t/p/w200${item.poster}` }}
                 style={styles.poster}
+                accessibilityLabel={`Pôster do filme ${item.title}`}
               />
-              <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.name} numberOfLines={2}>
+                {item.title}
+              </Text>
               <Text style={styles.rating}>⭐ {item.rating || "Sem nota"}</Text>
             </View>
           )}
@@ -54,22 +78,18 @@ export default function MyMovies() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 10, backgroundColor: "#fff" },
-  emptyText: { textAlign: "center", marginTop: 50, fontSize: 16, color: "#666" },
+  container: { flex: 1, padding: 20, backgroundColor: "#fff" },
+  title: { fontSize: 22, fontWeight: "bold", marginBottom: 20, textAlign: "center" },
+  empty: { marginTop: 40, textAlign: "center", fontSize: 16, color: "#666" },
   card: {
-    flex: 1,
-    margin: 5,
-    backgroundColor: "#f5f5f5",
+    width: "48%",
+    backgroundColor: "#f4f4f4",
     borderRadius: 10,
+    marginBottom: 15,
     padding: 10,
     alignItems: "center",
   },
-  poster: { width: 150, height: 220, borderRadius: 10 },
-  title: {
-    fontSize: 14,
-    fontWeight: "600",
-    marginTop: 8,
-    textAlign: "center",
-  },
-  rating: { color: "#e50914", marginTop: 4, fontWeight: "bold" },
+  poster: { width: 100, height: 150, borderRadius: 8, marginBottom: 10 },
+  name: { fontWeight: "bold", fontSize: 14, textAlign: "center" },
+  rating: { color: "#555", marginTop: 5 },
 });
